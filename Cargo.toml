@@ -32,5 +32,6 @@ thiserror = "2.0.0"
 tracing = "0.1.43"
 tracing-subscriber = "0.3.22"
 unicode-ident = "1.0.18"
+walrus = "0.24.4"
 windows-sys = "0.61.2"
 # keep-sorted end
