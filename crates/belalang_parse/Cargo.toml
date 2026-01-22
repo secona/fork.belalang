@@ -1,5 +1,5 @@
 [package]
-name = "belalang_ast"
+name = "belalang_parse"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -10,5 +10,5 @@ authors.workspace = true
 workspace = true
 
 [dependencies]
-belalang_parse.workspace = true
 thiserror.workspace = true
+unicode-ident.workspace = true

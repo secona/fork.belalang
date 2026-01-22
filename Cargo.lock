@@ -61,7 +61,7 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 name = "belalang_ast"
 version = "0.1.0"
 dependencies = [
- "belalang_lexer",
+ "belalang_parse",
  "thiserror",
 ]
 
@@ -91,7 +91,7 @@ version = "0.1.0"
 dependencies = [
  "belalang_ast",
  "belalang_bytecode",
- "belalang_lexer",
+ "belalang_parse",
  "belalang_vm",
 ]
 
@@ -106,6 +106,14 @@ dependencies = [
 
 [[package]]
 name = "belalang_lexer"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+ "unicode-ident",
+]
+
+[[package]]
+name = "belalang_parse"
 version = "0.1.0"
 dependencies = [
  "thiserror",
@@ -151,7 +159,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "belalang_ast",
- "belalang_lexer",
+ "belalang_parse",
  "clap",
  "console",
  "glob",

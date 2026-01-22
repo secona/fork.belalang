@@ -7,7 +7,7 @@ use std::{
 };
 
 use belalang_ast::Parser;
-use belalang_lexer::Lexer;
+use belalang_parse::Lexer;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut input = String::new();

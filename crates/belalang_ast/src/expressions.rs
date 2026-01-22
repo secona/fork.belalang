@@ -1,4 +1,4 @@
-use belalang_lexer::{
+use belalang_parse::{
     AssignmentKind,
     InfixKind,
     PrefixKind,

@@ -7,7 +7,7 @@ use std::{
 };
 
 use belalang_ast::Parser;
-use belalang_lexer::Lexer;
+use belalang_parse::Lexer;
 use clap::Parser as ClapParser;
 use console::style;
 use glob::glob;

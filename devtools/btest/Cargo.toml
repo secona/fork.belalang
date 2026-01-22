@@ -13,5 +13,5 @@ similar = "2.7.0"
 console = "0.16.2"
 anyhow = { workspace = true }
 belalang_ast = { workspace = true }
-belalang_lexer = { workspace = true }
+belalang_parse = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
