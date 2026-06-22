@@ -17,7 +17,7 @@ use mmtk::{
     vm::*,
 };
 
-static MMTK_INSTANCE: OnceLock<&'static MMTK<BrVM>> = OnceLock::new();
+static MMTK_INSTANCE: OnceLock<&'static MMTK<BelalangRT>> = OnceLock::new();
 
 pub fn init() {
     // SAFETY: This is called once at startup before any other threads are spawned.
@@ -27,7 +27,7 @@ pub fn init() {
 
     let mut builder = MMTKBuilder::new();
     builder.options.plan.set(mmtk::util::options::PlanSelector::NoGC);
-    let mmtk = memory_manager::mmtk_init::<BrVM>(&builder);
+    let mmtk = memory_manager::mmtk_init::<BelalangRT>(&builder);
     MMTK_INSTANCE.set(Box::leak(mmtk)).ok();
 }
 
@@ -42,25 +42,31 @@ pub fn alloc(size: usize) -> *mut u8 {
 }
 
 #[derive(Default)]
-struct BrVM;
+struct BelalangRT;
 
-unsafe impl Sync for BrVM {}
-unsafe impl Send for BrVM {}
+unsafe impl Sync for BelalangRT {}
+unsafe impl Send for BelalangRT {}
 
-impl VMBinding for BrVM {
+impl VMBinding for BelalangRT {
     type VMSlot = Address;
     type VMMemorySlice = Range<Address>;
 
-    type VMActivePlan = BrVM;
-    type VMCollection = BrVM;
-    type VMObjectModel = BrVM;
-    type VMReferenceGlue = BrVM;
-    type VMScanning = BrVM;
+    type VMActivePlan = RTActivePlan;
+    type VMCollection = RTCollection;
+    type VMObjectModel = RTObjectModel;
+    type VMReferenceGlue = RTReferenceGlue;
+    type VMScanning = RTScanning;
 
     const MAX_ALIGNMENT: usize = 1 << 6;
 }
 
-impl ActivePlan<BrVM> for BrVM {
+// -----------------------------------------------------------------------------
+// ActivePlan
+// -----------------------------------------------------------------------------
+
+struct RTActivePlan;
+
+impl ActivePlan<BelalangRT> for RTActivePlan {
     fn number_of_mutators() -> usize {
         1
     }
@@ -69,19 +75,25 @@ impl ActivePlan<BrVM> for BrVM {
         true
     }
 
-    fn mutator(_tls: VMMutatorThread) -> &'static mut mmtk::Mutator<BrVM> {
+    fn mutator(_tls: VMMutatorThread) -> &'static mut mmtk::Mutator<BelalangRT> {
         unreachable!()
     }
 
-    fn mutators<'a>() -> Box<dyn Iterator<Item = &'a mut mmtk::Mutator<BrVM>> + 'a> {
+    fn mutators<'a>() -> Box<dyn Iterator<Item = &'a mut mmtk::Mutator<BelalangRT>> + 'a> {
         unreachable!()
     }
 }
 
-impl Collection<BrVM> for BrVM {
+// -----------------------------------------------------------------------------
+// Collection
+// -----------------------------------------------------------------------------
+
+struct RTCollection;
+
+impl Collection<BelalangRT> for RTCollection {
     fn stop_all_mutators<F>(_tls: VMWorkerThread, _mutator_visitor: F)
     where
-        F: FnMut(&'static mut mmtk::Mutator<BrVM>),
+        F: FnMut(&'static mut mmtk::Mutator<BelalangRT>),
     {
     }
 
@@ -89,10 +101,16 @@ impl Collection<BrVM> for BrVM {
 
     fn block_for_gc(_tls: VMMutatorThread) {}
 
-    fn spawn_gc_thread(_tls: VMThread, _ctx: GCThreadContext<BrVM>) {}
+    fn spawn_gc_thread(_tls: VMThread, _ctx: GCThreadContext<BelalangRT>) {}
 }
 
-impl ObjectModel<BrVM> for BrVM {
+// -----------------------------------------------------------------------------
+// ObjectModel
+// -----------------------------------------------------------------------------
+
+struct RTObjectModel;
+
+impl ObjectModel<BelalangRT> for RTObjectModel {
     const GLOBAL_LOG_BIT_SPEC: VMGlobalLogBitSpec = VMGlobalLogBitSpec::in_header(0);
     const LOCAL_FORWARDING_POINTER_SPEC: VMLocalForwardingPointerSpec = VMLocalForwardingPointerSpec::in_header(0);
     const LOCAL_FORWARDING_BITS_SPEC: VMLocalForwardingBitsSpec = VMLocalForwardingBitsSpec::in_header(0);
@@ -104,7 +122,7 @@ impl ObjectModel<BrVM> for BrVM {
     fn copy(
         _from: ObjectReference,
         _semantics: CopySemantics,
-        _copy_context: &mut GCWorkerCopyContext<BrVM>,
+        _copy_context: &mut GCWorkerCopyContext<BelalangRT>,
     ) -> ObjectReference {
         unreachable!()
     }
@@ -150,7 +168,13 @@ impl ObjectModel<BrVM> for BrVM {
     }
 }
 
-impl ReferenceGlue<BrVM> for BrVM {
+// -----------------------------------------------------------------------------
+// ReferenceGlue
+// -----------------------------------------------------------------------------
+
+struct RTReferenceGlue;
+
+impl ReferenceGlue<BelalangRT> for RTReferenceGlue {
     type FinalizableType = ObjectReference;
 
     fn clear_referent(_new_reference: ObjectReference) {}
@@ -164,8 +188,14 @@ impl ReferenceGlue<BrVM> for BrVM {
     fn enqueue_references(_references: &[ObjectReference], _tls: VMWorkerThread) {}
 }
 
-impl Scanning<BrVM> for BrVM {
-    fn scan_object<SV: SlotVisitor<<BrVM as VMBinding>::VMSlot>>(
+// -----------------------------------------------------------------------------
+// Scanning
+// -----------------------------------------------------------------------------
+
+struct RTScanning;
+
+impl Scanning<BelalangRT> for RTScanning {
+    fn scan_object<SV: SlotVisitor<<BelalangRT as VMBinding>::VMSlot>>(
         _tls: VMWorkerThread,
         _object: ObjectReference,
         _slot_visitor: &mut SV,
@@ -176,12 +206,16 @@ impl Scanning<BrVM> for BrVM {
 
     fn scan_roots_in_mutator_thread(
         _tls: VMWorkerThread,
-        _mutator: &'static mut mmtk::Mutator<Self>,
-        _factory: impl RootsWorkFactory<<BrVM as VMBinding>::VMSlot>,
+        _mutator: &'static mut mmtk::Mutator<BelalangRT>,
+        _factory: impl RootsWorkFactory<<BelalangRT as VMBinding>::VMSlot>,
     ) {
     }
 
-    fn scan_vm_specific_roots(_tls: VMWorkerThread, _factory: impl RootsWorkFactory<<BrVM as VMBinding>::VMSlot>) {}
+    fn scan_vm_specific_roots(
+        _tls: VMWorkerThread,
+        _factory: impl RootsWorkFactory<<BelalangRT as VMBinding>::VMSlot>,
+    ) {
+    }
 
     fn supports_return_barrier() -> bool {
         false
